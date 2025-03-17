@@ -13,16 +13,16 @@ const getState = ({ getStore, getActions, setStore }) => {
 					background: "white",
 					initial: "white"
 				}
-			]
+			],
+			token: localStorage.getItem("token") || null,
 		},
 		actions: {
-			// Use getActions to call a function within a fuction
 			exampleFunction: () => {
 				getActions().changeColor(0, "green");
 			},
-
 			getMessage: async () => {
 				try{
+					const BACKEND_URL = process.env.REACT_APP_BACKEND_URL|| "https://miniature-space-winner-5g4wggp64p9p2ppg-3001.app.github.dev/api"
 					// fetching data from the backend
 					const resp = await fetch(process.env.BACKEND_URL + "/api/hello")
 					const data = await resp.json()
@@ -46,6 +46,55 @@ const getState = ({ getStore, getActions, setStore }) => {
 
 				//reset the global store
 				setStore({ demo: demo });
+			},
+			// Register new user
+			register: async (user) => {
+				try {
+					let response = await fetch(`${process.env.BACKEND_URL}/register`, {
+						method: "POST",
+						headers: { 
+							"Content-Type": "application/json" 
+						},
+						body: JSON.stringify(user),
+					}
+				)
+					return response.status
+				} catch (error) {
+					console.error("Error in register:", error);
+					return false;
+				}
+			},
+
+			// Login user
+			login: async (user) => {
+				try {
+					console.log("LOGIN REQUEST:", user);
+					let response = await fetch(`${process.env.BACKEND_URL}/login`, {
+						method: "POST",
+						headers: { 
+							"Content-Type": "application/json" 
+						},
+						body: JSON.stringify(user),
+					}
+				)
+					let data = await response.json();
+					console.log("LOGIN RESPONSE:", response.status, data);
+					if (!response.ok){
+					setStore({ 
+						token: data.token 
+					})
+						localStorage.setItem("token", data.token)}
+					return { status: response.status, data };
+				} catch (error) {
+					console.error("Error in login:", error);
+					return false
+				}
+			},
+
+			// Logout user
+			logout: () => {
+				localStorage.removeItem("token");
+				setStore({ token: null });
 			}
 		}
 	};
